@@ -13,6 +13,8 @@ import { Model } from "mongoose";
 import { Product } from "./schemas/product.schema";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { format } from "path";
+import { formatName } from "src/lib/utils";
 
 @Injectable()
 export class ProductsService {
@@ -63,10 +65,10 @@ export class ProductsService {
     return { data, total, page, pages };
   }
 
-  async findOne(id: string): Promise<Product> {
-    const product = await this.productModel.findById(id);
+  async findByName(slug: string): Promise<Product> {
+    const product = await this.productModel.findOne({ slug });
     if (!product) {
-      throw new NotFoundException(`Producto con ID ${id} no encontrado`);
+      throw new NotFoundException(`Producto con name ${slug} no encontrado`);
     }
     return product;
   }
