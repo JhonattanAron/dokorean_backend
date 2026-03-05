@@ -36,14 +36,14 @@ export class ProductsController {
     );
   }
 
-  @Get("external/:externalId")
-  findByExternalId(@Param("externalId") externalId: string) {
-    return this.productsService.findByExternalId(externalId);
+  @Get("name/:name")
+  findOne(@Param("name") name: string) {
+    return this.productsService.findByName(name);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.productsService.findByName(id);
+  findById(@Param("id") id: string) {
+    return this.productsService.findById(id);
   }
 
   @Patch(":id")
@@ -55,11 +55,5 @@ export class ProductsController {
   @HttpCode(200)
   remove(@Param("id") id: string) {
     return this.productsService.remove(id);
-  }
-
-  @Delete("external/:externalId")
-  @HttpCode(200)
-  removeByExternalId(@Param("externalId") externalId: string) {
-    return this.productsService.removeByExternalId(externalId);
   }
 }

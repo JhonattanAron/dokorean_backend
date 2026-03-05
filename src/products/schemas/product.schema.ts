@@ -1,49 +1,72 @@
+import { Document, Types } from "mongoose";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import {
+  Description,
+  DescriptionSchema,
+  Price,
+  PriceSchema,
+  Reviews,
+  ReviewsSchema,
+} from "./sub.schema";
 
 @Schema({ timestamps: true })
 export class Product extends Document {
-  @Prop({ required: true })
-  externalId: string;
+  @Prop({ type: String })
+  brand: string;
 
-  @Prop({ required: true })
-  title: string;
+  @Prop({ type: [String] })
+  category: string[];
 
-  @Prop()
-  slug: string;
+  @Prop({ type: [String] })
+  claims: string[];
 
-  @Prop()
-  description: string;
-
-  @Prop()
-  price: string;
-
-  @Prop()
-  pricePerM2: string;
-
-  @Prop()
+  @Prop({ type: String })
   contentSize: string;
 
-  @Prop()
+  @Prop({ type: String })
   deliveryTime: string;
 
-  @Prop()
-  stock: string;
+  @Prop({ type: Description, required: false })
+  description?: Description;
 
-  @Prop()
-  productNumber: string;
+  @Prop({ type: Object, required: false })
+  dimensions?: Record<string, any>; // si quieres más detalle, puedes definir sub-schema también
 
-  @Prop()
-  sourceUrl: string;
+  @Prop({ type: [String] })
+  features: string[];
 
-  @Prop({ type: [String], default: [] })
+  @Prop({ type: [String] })
   images: string[];
 
-  @Prop()
+  @Prop({ type: Boolean })
+  inStock: boolean;
+
+  @Prop({ type: String })
   mainImage: string;
 
-  @Prop({ type: [String], default: [] })
-  categories: string[];
+  @Prop({ type: Price, required: false })
+  price?: Price;
+
+  @Prop({ type: Number })
+  price_per_m2: number;
+
+  @Prop({ type: Reviews, required: false })
+  reviews?: Reviews;
+
+  @Prop({ type: String })
+  slug: string;
+
+  @Prop({ type: Number, required: false })
+  stock?: number;
+
+  @Prop({ type: String })
+  title: string;
+
+  @Prop({ type: Date })
+  createdAt: Date;
+
+  @Prop({ type: Date })
+  updatedAt: Date;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
