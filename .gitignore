@@ -3,6 +3,7 @@
 /node_modules
 /build
 /config/google-credentials.json
+/config
 
 # Logs
 logs
