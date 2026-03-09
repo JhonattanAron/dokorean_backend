@@ -43,19 +43,24 @@ export class ProductsService {
     page: number = 1,
     limit: number = 10,
     search?: string,
+    category?: string,
   ): Promise<{ data: Product[]; total: number; page: number; pages: number }> {
     const skip = (page - 1) * limit;
 
-    const query = search
-      ? {
-          $or: [
-            { title: { $regex: search, $options: "i" } },
-            { "description.general": { $regex: search, $options: "i" } },
-            { "description.overview": { $regex: search, $options: "i" } },
-            { slug: { $regex: search, $options: "i" } },
-          ],
-        }
-      : {};
+    const query: any = {};
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { "description.general": { $regex: search, $options: "i" } },
+        { "description.overview": { $regex: search, $options: "i" } },
+        { slug: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (category) {
+      query.category = category;
+    }
 
     const data = await this.productModel
       .find(query)
@@ -69,7 +74,6 @@ export class ProductsService {
 
     return { data, total, page, pages };
   }
-
   // Buscar producto por _id
   async findById(id: string): Promise<Product> {
     const product = await this.productModel.findById(id);
