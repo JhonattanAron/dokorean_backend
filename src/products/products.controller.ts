@@ -50,6 +50,8 @@ export class ProductsController {
 
   @Patch(":id")
   update(@Param("id") id: string, @Body() updateProductDto: UpdateProductDto) {
+    console.log(updateProductDto);
+
     return this.productsService.update(id, updateProductDto);
   }
 
