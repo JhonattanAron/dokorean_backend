@@ -92,7 +92,6 @@ export class ProductsService {
     return product;
   }
 
-  // Actualizar producto
   async update(
     id: string,
     updateProductDto: UpdateProductDto,
@@ -102,23 +101,19 @@ export class ProductsService {
       throw new NotFoundException(`Producto con ID ${id} no encontrado`);
     }
 
-    // Manejo de imágenes con StorageService
     const oldImages: string[] = existingProduct.images || [];
     const newImages: string[] = updateProductDto.images || [];
+
     const bucketName = process.env.GCS_BUCKET_NAME!;
+    const bucketUrl = `https://storage.googleapis.com/${bucketName}/`;
 
-    const getPath = (url: string): string | undefined => {
-      const parts = url.split(`${bucketName}/`);
-      return parts[1];
-    };
+    const removedUrls = oldImages.filter(
+      (img) => img.startsWith(bucketUrl) && !newImages.includes(img),
+    );
 
-    const oldPaths = oldImages.map(getPath).filter((p): p is string => !!p);
-    const newPaths = newImages.map(getPath).filter((p): p is string => !!p);
-    const removedPaths = oldPaths.filter((path) => !newPaths.includes(path));
-
-    for (const path of removedPaths) {
-      await this.storageService.deleteByPath(path);
-    }
+    await Promise.all(
+      removedUrls.map((url) => this.storageService.deleteFile(url)),
+    );
 
     Object.assign(existingProduct, updateProductDto);
     await existingProduct.save();

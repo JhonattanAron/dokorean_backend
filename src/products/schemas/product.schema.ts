@@ -67,6 +67,9 @@ export class Product extends Document {
 
   @Prop({ type: Date })
   updatedAt: Date;
+
+  @Prop({ type: Boolean, default: false })
+  imagesUpdated: boolean;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
