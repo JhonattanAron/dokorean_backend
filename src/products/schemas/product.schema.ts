@@ -38,6 +38,9 @@ export class Product extends Document {
   @Prop({ type: [String] })
   images: string[];
 
+  @Prop({ type: [String] })
+  models: string[];
+
   @Prop({ type: Boolean })
   inStock: boolean;
 
