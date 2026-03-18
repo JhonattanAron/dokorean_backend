@@ -52,9 +52,11 @@ export class ProductsService {
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
+        { slug: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } }, // 👈 FALTABA
+        { category: { $in: [new RegExp(search, "i")] } },
         { "description.general": { $regex: search, $options: "i" } },
         { "description.overview": { $regex: search, $options: "i" } },
-        { slug: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -136,5 +138,21 @@ export class ProductsService {
       throw new NotFoundException(`Producto con name ${slug} no encontrado`);
     }
     return product;
+  }
+  async removeBulk(ids: string[]) {
+    return this.productModel.deleteMany({
+      _id: { $in: ids },
+    });
+  }
+
+  async updateCategoriesBulk(ids: string[], categories: string[]) {
+    return this.productModel.updateMany(
+      { _id: { $in: ids } },
+      {
+        $addToSet: {
+          category: { $each: categories },
+        },
+      },
+    );
   }
 }

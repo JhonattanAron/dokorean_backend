@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Param } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Delete,
+  HttpCode,
+} from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./create-category.dto";
 
@@ -32,5 +40,10 @@ export class CategoriesController {
   @Post("import")
   importCategories(@Body() categories: any[]) {
     return this.categoriesService.importCategories(categories);
+  }
+  @Delete(":id")
+  @HttpCode(200)
+  remove(@Param("id") id: string) {
+    return this.categoriesService.remove(id);
   }
 }

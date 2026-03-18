@@ -17,6 +17,12 @@ import { UpdateProductDto } from "./dto/update-product.dto";
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Delete("bulk")
+  @HttpCode(200)
+  removeBulk(@Body() body: { ids: string[] }) {
+    return this.productsService.removeBulk(body.ids);
+  }
+
   @Post()
   @HttpCode(201)
   create(@Body() createProductDto: CreateProductDto) {
@@ -59,5 +65,10 @@ export class ProductsController {
   @HttpCode(200)
   remove(@Param("id") id: string) {
     return this.productsService.remove(id);
+  }
+
+  @Patch("bulk/categories")
+  updateCategoriesBulk(@Body() body: { ids: string[]; categories: string[] }) {
+    return this.productsService.updateCategoriesBulk(body.ids, body.categories);
   }
 }

@@ -1,6 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { isValidObjectId, Model } from "mongoose";
 import { Category } from "./category.schema";
 import { CreateCategoryDto } from "./create-category.dto";
 import { CategoryTree } from "./types/category-tree.type";
@@ -122,6 +126,36 @@ export class CategoriesService {
 
     return {
       message: "Categorias importadas correctamente",
+    };
+  }
+  async remove(id: string) {
+    // ✅ validar ObjectId
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException("ID inválido");
+    }
+
+    // 🔍 verificar si existe
+    const category = await this.categoryModel.findById(id);
+    if (!category) {
+      throw new NotFoundException("Categoría no encontrada");
+    }
+
+    // 🚨 verificar hijos
+    const hasChildren = await this.categoryModel.exists({
+      parent: id,
+    });
+
+    if (hasChildren) {
+      throw new BadRequestException(
+        "No puedes eliminar una categoría que tiene subcategorías",
+      );
+    }
+
+    // ✅ eliminar
+    await this.categoryModel.findByIdAndDelete(id);
+
+    return {
+      message: "Categoría eliminada correctamente",
     };
   }
 }
