@@ -7,6 +7,7 @@ import { ConfigModule } from "@nestjs/config";
 import { StorageModule } from "./storage/storage.module";
 import { CategoriesModule } from "./categorys/categories.module";
 import { UsersProjectsModule } from "./users_projects/users_projects.module";
+import { OpenRouterModule } from "./aurentric/openrouter.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UsersProjectsModule } from "./users_projects/users_projects.module";
     StorageModule,
     CategoriesModule,
     UsersProjectsModule,
+    OpenRouterModule,
   ],
   controllers: [AppController],
   providers: [AppService],

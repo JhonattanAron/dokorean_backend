@@ -1,90 +1,105 @@
 import { Injectable } from "@nestjs/common";
-import { Storage } from "@google-cloud/storage";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 
 @Injectable()
 export class StorageService {
-  private storage = new Storage({
-    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  private s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
   });
 
-  private bucket = this.storage.bucket(process.env.GCS_BUCKET_NAME!);
+  private bucket = process.env.R2_BUCKET_NAME!;
+  private publicUrl = process.env.R2_PUBLIC_URL!;
 
-  // 🔹 SUBIR ARCHIVO
+  /* ---------------- SUBIR ---------------- */
+
   async uploadFile(file: Express.Multer.File) {
-    const fileName = `products/${randomUUID()}-${file.originalname}`;
-    const blob = this.bucket.file(fileName);
+    const fileName = `${randomUUID()}-${file.originalname}`;
 
-    await blob.save(file.buffer, {
-      metadata: {
-        contentType: file.mimetype,
-      },
-    });
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: fileName,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      }),
+    );
 
-    return `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/${fileName}`;
+    return {
+      url: `${this.publicUrl}/${fileName}`,
+      key: fileName, // 🔥 IMPORTANTE
+    };
   }
 
-  async deleteByPath(path: string) {
-    await this.bucket.file(path).delete();
+  /* ---------------- DELETE ---------------- */
+
+  async deleteByPath(key: string) {
+    await this.s3.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
   }
 
-  // 🔥 BORRAR ARCHIVO DESDE URL
   async deleteFile(fileUrl: string) {
     try {
-      const bucketName = process.env.GCS_BUCKET_NAME!;
-      const filePath = fileUrl.split(`${bucketName}/`)[1];
+      if (!fileUrl.includes(this.publicUrl)) return;
 
-      if (!filePath) return;
+      const key = fileUrl.replace(`${this.publicUrl}/`, "");
 
-      await this.bucket.file(filePath).delete();
+      await this.deleteByPath(key);
     } catch (error) {
-      console.error("Error eliminando archivo del bucket:", error);
+      console.error("Error eliminando archivo:", error);
     }
   }
 
+  /* ---------------- SIGNED URL ---------------- */
+
   async generateDownloadUrl(fileUrl: string): Promise<string> {
-    const bucketName = process.env.GCS_BUCKET_NAME!;
+    if (!fileUrl.includes(this.publicUrl)) return fileUrl;
 
-    if (!fileUrl) {
-      throw new Error("fileUrl es requerido");
-    }
+    const key = fileUrl.replace(`${this.publicUrl}/`, "");
 
-    const url = new URL(fileUrl);
-
-    // 🔥 SI NO ES DE GOOGLE STORAGE → DEVOLVER TAL CUAL
-    const isGoogleStorage =
-      url.hostname === "storage.googleapis.com" ||
-      url.hostname.includes("storage.googleapis.com");
-
-    if (!isGoogleStorage) {
-      return fileUrl; // externa → no firmar
-    }
-
-    let filePath = "";
-
-    // Caso 1: https://storage.googleapis.com/bucket-name/path/file.jpg
-    if (url.hostname === "storage.googleapis.com") {
-      const parts = url.pathname.split("/");
-      filePath = parts.slice(2).join("/");
-    }
-
-    // Caso 2: https://bucket-name.storage.googleapis.com/path/file.jpg
-    else if (url.hostname.includes(`${bucketName}.storage.googleapis.com`)) {
-      filePath = url.pathname.substring(1);
-    }
-
-    // 🔥 Si no es tu bucket → devolver normal
-    if (!filePath) {
-      return fileUrl;
-    }
-
-    // 🔥 Generar signed URL solo si es tu bucket
-    const [signedUrl] = await this.bucket.file(filePath).getSignedUrl({
-      version: "v4",
-      action: "read",
-      expires: Date.now() + 5 * 60 * 1000,
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
     });
 
-    return signedUrl;
+    return await getSignedUrl(this.s3, command, {
+      expiresIn: 60 * 5,
+    });
+  }
+
+  /* ---------------- LIST ---------------- */
+
+  async listFiles(prefix: string = "") {
+    const command = new ListObjectsV2Command({
+      Bucket: this.bucket,
+      Prefix: prefix,
+    });
+
+    const response = await this.s3.send(command);
+
+    if (!response.Contents) return [];
+
+    return response.Contents.map((item) => ({
+      key: item.Key!,
+      url: `${this.publicUrl}/${item.Key}`,
+      size: item.Size || 0,
+      lastModified: item.LastModified,
+    }));
   }
 }
