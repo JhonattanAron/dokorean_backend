@@ -158,4 +158,11 @@ export class CategoriesService {
       message: "Categoría eliminada correctamente",
     };
   }
+  async update(id: string, dto: CreateCategoryDto): Promise<Category> {
+    const updated = await this.categoryModel.findByIdAndUpdate(id, dto, {
+      new: true, // devuelve el documento actualizado
+    });
+    if (!updated) throw new NotFoundException("Category not found");
+    return updated;
+  }
 }
