@@ -63,7 +63,6 @@ export class StorageController {
   @Get("files")
   async getFiles(@Query("prefix") prefix?: string) {
     const files = await this.storageService.listFiles(prefix);
-    console.log(files);
 
     return {
       total: files.length,

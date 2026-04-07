@@ -8,6 +8,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
+import sharp from "sharp";
 
 @Injectable()
 export class StorageService {
@@ -24,9 +25,22 @@ export class StorageService {
   private publicUrl = process.env.R2_PUBLIC_URL!;
 
   /* ---------------- SUBIR ---------------- */
+  slugify(filename: string) {
+    return filename
+      .toLowerCase() // todo minúsculas
+      .replace(/\s+/g, "-") // espacios a guiones
+      .replace(/[^a-z0-9\-\.]/g, "") // eliminar caracteres raros
+      .replace(/-+/g, "-") // varios guiones seguidos a uno solo
+      .replace(/^\-|\-$/g, ""); // quitar guiones al inicio/final
+  }
 
   async uploadFile(file: Express.Multer.File) {
-    const fileName = `${randomUUID()}-${file.originalname}`;
+    // Obtener la extensión
+    const ext = file.originalname.split(".").pop();
+    // Crear un nombre base "slug"
+    const baseName = file.originalname.replace(/\.[^/.]+$/, "");
+    // Combinar con un fragmento de UUID para que sea único
+    const fileName = `${this.slugify(baseName)}-${randomUUID().slice(0, 8)}.${ext}`;
 
     await this.s3.send(
       new PutObjectCommand({
@@ -39,10 +53,47 @@ export class StorageService {
 
     return {
       url: `${this.publicUrl}/${fileName}`,
-      key: fileName, // 🔥 IMPORTANTE
+      key: fileName,
     };
   }
 
+  async uploadBase64ImageOptimized(base64Image: string): Promise<string> {
+    // 1️⃣ Separar el header del Base64
+    const matches = base64Image.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!matches) throw new Error("Formato Base64 inválido");
+
+    const imageData = matches[2];
+
+    // 2️⃣ Convertir a Buffer
+    const buffer = Buffer.from(imageData, "base64");
+
+    // 3️⃣ Procesar con Sharp
+    const optimizedBuffer = await sharp(buffer)
+      .rotate() // corrige orientación según EXIF
+      .resize({ width: 1024, withoutEnlargement: true }) // ancho máximo 1024px
+      .webp({ quality: 75, lossless: false }) // WebP ligero
+      .toBuffer();
+
+    // 4️⃣ Crear un archivo temporal tipo Express.Multer.File
+    const file: Express.Multer.File = {
+      buffer: optimizedBuffer,
+      originalname: `image-${Date.now()}.webp`,
+      mimetype: "image/webp",
+      size: optimizedBuffer.length,
+      fieldname: "file",
+      encoding: "7bit",
+      destination: "",
+      filename: "",
+      path: "",
+      stream: undefined as any,
+    };
+
+    // 5️⃣ Subir a S3 usando tu servicio
+    const uploadResult = await this.uploadFile(file);
+
+    // 6️⃣ Retornar solo la URL
+    return uploadResult.url;
+  }
   /* ---------------- DELETE ---------------- */
 
   async deleteByPath(key: string) {
