@@ -9,22 +9,31 @@ import {
   ReviewsSchema,
 } from "./sub.schema";
 
+@Schema({ _id: false }) // 👈 importante (evita ids innecesarios)
+export class BundleTier {
+  @Prop({ required: true, min: 1 })
+  quantity!: number;
+
+  @Prop({ required: true, min: 0, max: 100 })
+  discountPercent!: number;
+}
+
 @Schema({ timestamps: true })
 export class Product extends Document {
   @Prop({ type: String })
-  brand: string;
+  brand!: string;
 
   @Prop({ type: [String] })
-  category: string[];
+  category!: string[];
 
   @Prop({ type: [String] })
-  claims: string[];
+  claims!: string[];
 
   @Prop({ type: String })
-  contentSize: string;
+  contentSize!: string;
 
   @Prop({ type: String })
-  deliveryTime: string;
+  deliveryTime!: string;
 
   @Prop({ type: Description, required: false })
   description?: Description;
@@ -33,46 +42,64 @@ export class Product extends Document {
   dimensions?: Record<string, any>; // si quieres más detalle, puedes definir sub-schema también
 
   @Prop({ type: [String] })
-  features: string[];
+  features!: string[];
 
   @Prop({ type: [String] })
-  images: string[];
+  images!: string[];
 
   @Prop({ type: [String] })
-  models: string[];
+  models!: string[];
 
   @Prop({ type: Boolean })
-  inStock: boolean;
+  inStock!: boolean;
 
   @Prop({ type: String })
-  mainImage: string;
+  mainImage!: string;
 
   @Prop({ type: Price, required: false })
   price?: Price;
 
   @Prop({ type: Number })
-  price_per_m2: number;
+  price_per_m2!: number;
 
   @Prop({ type: Reviews, required: false })
   reviews?: Reviews;
 
   @Prop({ type: String })
-  slug: string;
+  slug!: string;
 
   @Prop({ type: Number, required: false })
   stock?: number;
 
   @Prop({ type: String })
-  title: string;
+  title!: string;
 
   @Prop({ type: Date })
-  createdAt: Date;
+  createdAt!: Date;
 
   @Prop({ type: Date })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @Prop({ type: Boolean, default: false })
-  imagesUpdated: boolean;
+  imagesUpdated!: boolean;
+
+  // 👇 AQUÍ ESTÁ LO IMPORTANTE
+  @Prop({
+    type: [
+      {
+        quantity: { type: Number, required: true, min: 1 },
+        discountPercent: { type: Number, required: true, min: 0, max: 100 },
+      },
+    ],
+    default: [],
+  })
+  packs!: BundleTier[];
+
+  @Prop({ type: [String], default: [] })
+  videos!: string[];
+
+  @Prop({ type: String, default: "" })
+  mainVideo!: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

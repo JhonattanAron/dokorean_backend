@@ -10,7 +10,7 @@ import { Type } from "class-transformer";
 
 class DescriptionDto {
   @IsString()
-  general: string;
+  general!: string;
 
   @IsOptional()
   @IsArray()
@@ -37,30 +37,35 @@ class DescriptionDto {
 
 class PriceDto {
   @IsNumber()
-  original: number;
+  original!: number;
 
   @IsNumber()
-  current: number;
+  current!: number;
 
   @IsString()
-  currency: string;
+  currency!: string;
 }
 
 class ReviewsDto {
   @IsNumber()
-  rating: number;
+  rating!: number;
 
   @IsNumber()
-  count: number;
+  count!: number;
+}
+
+class BundleTierDto {
+  quantity!: number;
+  discountPercent!: number;
 }
 
 export class CreateProductDto {
   @IsString()
-  brand: string;
+  brand!: string;
 
   @IsArray()
   @IsString({ each: true })
-  category: string[];
+  category!: string[];
 
   @IsOptional()
   @IsArray()
@@ -79,6 +84,11 @@ export class CreateProductDto {
   @ValidateNested()
   @Type(() => DescriptionDto)
   description?: DescriptionDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BundleTierDto)
+  packs?: BundleTierDto[];
 
   @IsOptional()
   dimensions?: Record<string, any>; // sub-schema opcional si no tenemos detalle
@@ -107,7 +117,7 @@ export class CreateProductDto {
   price?: PriceDto;
 
   @IsNumber()
-  price_per_m2: number;
+  price_per_m2!: number;
 
   @IsOptional()
   @ValidateNested()
@@ -115,12 +125,21 @@ export class CreateProductDto {
   reviews?: ReviewsDto;
 
   @IsString()
-  slug: string;
+  slug!: string;
 
   @IsOptional()
   @IsNumber()
   stock?: number;
 
   @IsString()
-  title: string;
+  title!: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  videos?: string[];
+
+  @IsOptional()
+  @IsString()
+  mainVideo?: string;
 }
