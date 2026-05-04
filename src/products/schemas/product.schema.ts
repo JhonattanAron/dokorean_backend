@@ -8,6 +8,7 @@ import {
   Reviews,
   ReviewsSchema,
 } from "./sub.schema";
+import { Variant } from "./variants.schema";
 
 @Schema({ _id: false }) // 👈 importante (evita ids innecesarios)
 export class BundleTier {
@@ -100,6 +101,9 @@ export class Product extends Document {
 
   @Prop({ type: String, default: "" })
   mainVideo!: string;
+
+  @Prop({ type: [Variant], default: [] })
+  variants!: Variant[];
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

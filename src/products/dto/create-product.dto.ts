@@ -7,6 +7,7 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { VariantDto } from "./variants.dto";
 
 class DescriptionDto {
   @IsString()
@@ -142,4 +143,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   mainVideo?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => VariantDto)
+  variants?: VariantDto[];
 }
