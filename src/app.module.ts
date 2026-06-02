@@ -8,6 +8,7 @@ import { StorageModule } from "./storage/storage.module";
 import { CategoriesModule } from "./categorys/categories.module";
 import { UsersProjectsModule } from "./users_projects/users_projects.module";
 import { AurentricModule } from "./aurentric/aurentric.module";
+import { CarouselConfigModule } from "./carousel-config/carousel-config.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AurentricModule } from "./aurentric/aurentric.module";
     CategoriesModule,
     UsersProjectsModule,
     AurentricModule,
+    CarouselConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],
